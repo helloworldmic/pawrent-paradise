@@ -1,0 +1,2080 @@
+diff --git a/.gitignore b/.gitignore
+index 9bdf355..678b740 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -1,3 +1,7 @@
+ node_modules
+ .DS_Store
+-.env
+\ No newline at end of file
++.env
++.vscode
++.prettierignore
++package.json
++settings.json
+\ No newline at end of file
+diff --git a/.vscode/settings.json b/.vscode/settings.json
+index 02472ba..06fb76c 100644
+--- a/.vscode/settings.json
++++ b/.vscode/settings.json
+@@ -6,9 +6,12 @@
+             "port": 5432,
+             "askForPassword": true,
+             "driver": "PostgreSQL",
+-            "name": "default",
+-            "database": "petshop_project",
+-            "username": "janet"
++            "name": "shops",
++            "database": "shops",
++            "username": "alvinma"
+         }
++    ],
++    "cSpell.words": [
++        "fieldname"
+     ]
+ }
+\ No newline at end of file
+diff --git a/app.ts b/app.ts
+index dee702c..5d8383b 100644
+--- a/app.ts
++++ b/app.ts
+@@ -5,11 +5,12 @@ import path from "path";
+ import { isLoggedIn } from './guards';
+ import { userRoutes } from './userRoutes'
+ import { homePageRoutes } from './homePageRoutes'
+-// import { shopRoutes } from './shopRoutes'
+-import { reviewRoutes } from './reviewRoutes'
++import { shopRoutes } from './shopRoutes'
+ import dotenv from 'dotenv';
+ dotenv.config();
+ import grant from 'grant';
++import {reviewRoutes} from './reviewRoutes'
++import {searchRoutes} from './searchShopRoutes'
+ //import { Server as SocketIO } from "socket.io";
+ //import http from "http";
+ 
+@@ -76,14 +77,21 @@ app.get('/test', (req, res) => {
+   res.json({ message: "123" })
+ })
+ 
+-app.use(express.urlencoded({extended: true}))
++app.use(express.urlencoded({extended:true}))
+ app.use(express.json())
+-app.use('/', userRoutes);
+-app.use('/', reviewRoutes)
+-// app.use('/', shopRoutes)
++
++app.use((req, res, next) => {
++  console.log(`req.path ${req.path}`)
++  next();
++})
++
++app.use(reviewRoutes)
++app.use(searchRoutes)
++app.use('/shops', shopRoutes)
+ app.use(homePageRoutes)
+ app.use(express.static(path.join(__dirname, "public")));
+ app.use("/images", express.static(path.join(__dirname, "images")));
++app.use('/', userRoutes);
+ app.use(isLoggedIn, express.static(path.join(__dirname, "protected")));
+ 
+ 
+diff --git a/cats/cat1.jpeg b/cats/cat1.jpeg
+deleted file mode 100644
+index 001a597..0000000
+Binary files a/cats/cat1.jpeg and /dev/null differ
+diff --git a/cats/cat10.jpeg b/cats/cat10.jpeg
+deleted file mode 100644
+index 2736fa2..0000000
+Binary files a/cats/cat10.jpeg and /dev/null differ
+diff --git a/cats/cat11.jpeg b/cats/cat11.jpeg
+deleted file mode 100644
+index 492ec3f..0000000
+Binary files a/cats/cat11.jpeg and /dev/null differ
+diff --git a/cats/cat2.jpeg b/cats/cat2.jpeg
+deleted file mode 100644
+index 480d75a..0000000
+Binary files a/cats/cat2.jpeg and /dev/null differ
+diff --git a/cats/cat3.jpeg b/cats/cat3.jpeg
+deleted file mode 100644
+index 41f1144..0000000
+Binary files a/cats/cat3.jpeg and /dev/null differ
+diff --git a/cats/cat4.jpeg b/cats/cat4.jpeg
+deleted file mode 100644
+index fea22f1..0000000
+Binary files a/cats/cat4.jpeg and /dev/null differ
+diff --git a/cats/cat5.jpeg b/cats/cat5.jpeg
+deleted file mode 100644
+index fd03a0b..0000000
+Binary files a/cats/cat5.jpeg and /dev/null differ
+diff --git a/cats/cat6.jpeg b/cats/cat6.jpeg
+deleted file mode 100644
+index 5385f2d..0000000
+Binary files a/cats/cat6.jpeg and /dev/null differ
+diff --git a/cats/cat6.png b/cats/cat6.png
+deleted file mode 100644
+index 846f517..0000000
+Binary files a/cats/cat6.png and /dev/null differ
+diff --git a/cats/cat7.jpeg b/cats/cat7.jpeg
+deleted file mode 100644
+index 69435c0..0000000
+Binary files a/cats/cat7.jpeg and /dev/null differ
+diff --git a/cats/cat8.jpeg b/cats/cat8.jpeg
+deleted file mode 100644
+index 2b37c04..0000000
+Binary files a/cats/cat8.jpeg and /dev/null differ
+diff --git a/cats/cat9.jpeg b/cats/cat9.jpeg
+deleted file mode 100644
+index 0388de6..0000000
+Binary files a/cats/cat9.jpeg and /dev/null differ
+diff --git a/guards.ts b/guards.ts
+index e16351a..e1bc8b9 100644
+--- a/guards.ts
++++ b/guards.ts
+@@ -1,11 +1,12 @@
+ import {Request,Response,NextFunction} from 'express';
+ 
+ export function isLoggedIn(req:Request,res:Response,next:NextFunction){
+-    if(req.session?.['user']){
++    console.log(req.session)
++    if(req.session['user']){
+         console.log('suc2')
+         next();
+     }else{
+-        console.log('fail2')
++        console.log('fail to pass isLoggedIn')
+         res.redirect('/userLogin.html')
+     }
+ }
+\ No newline at end of file
+diff --git a/index.js b/index.js
+deleted file mode 100644
+index f095324..0000000
+--- a/index.js
++++ /dev/null
+@@ -1,2 +0,0 @@
+-require('ts-node/register');
+-require('./app');
+\ No newline at end of file
+diff --git a/insertImage.sql b/insertImage.sql
+index d6f0676..19f0bdc 100644
+--- a/insertImage.sql
++++ b/insertImage.sql
+@@ -100,3 +100,5 @@ SELECT * from shops
+     );
+ 
+ SELECT * from images;
++select * from reviews;
++select * from shops; 
+\ No newline at end of file
+diff --git a/janet.session.sql b/janet.session.sql
+index 636308f..f993271 100644
+--- a/janet.session.sql
++++ b/janet.session.sql
+@@ -304,8 +304,7 @@ values (
+         'Start our business from 1989, we promise to offer your pet with the best experiences of pet grooming',
+         'North Point',
+         '304 Electric Rd, North Point',
+-        null,
+-        '25701028',
++        null '25701028',
+         null,
+         '10:30 - 19:30',
+         '300-499'
+diff --git a/protected/admin.html b/protected/admin.html
+new file mode 100644
+index 0000000..984788a
+--- /dev/null
++++ b/protected/admin.html
+@@ -0,0 +1 @@
++<h1>Logged in</h1>
+\ No newline at end of file
+diff --git a/protected/userInfo.html b/protected/userInfo.html
+deleted file mode 100644
+index 94a28e8..0000000
+--- a/protected/userInfo.html
++++ /dev/null
+@@ -1,21 +0,0 @@
+-<html>
+-
+-    <head>
+-        <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css"
+-            integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+-        <link rel="stylesheet" href="./test.css">
+-        <script src="userInfo.js"></script>
+-    </head>
+-
+-    <body>
+-        <div id="nav-placeholder"></div>
+-        <br><br><br>
+-        <h1>Logged in</h1>
+-
+-        <script src="//code.jquery.com/jquery.min.js"></script>
+-        <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js"
+-            integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl"
+-            crossorigin="anonymous"></script>
+-        <script src="nav.js"></script>
+-    </body>
+-</html> 
+\ No newline at end of file
+diff --git a/protected/userInfo.js b/protected/userInfo.js
+deleted file mode 100644
+index 66b5bbd..0000000
+--- a/protected/userInfo.js
++++ /dev/null
+@@ -1,11 +0,0 @@
+-function setSession() {
+-    const searchParams = new URLSearchParams(window.location.search);
+-    const username = searchParams.get('username');
+-    if (username){
+-        console.log('setting session')
+-        sessionStorage.setItem('status','loggedIn') 
+-        sessionStorage.setItem('username',username) 
+-    }
+-  };
+-
+-setSession()
+\ No newline at end of file
+diff --git a/public/index.css b/public/index.css
+index d91920c..4832111 100644
+--- a/public/index.css
++++ b/public/index.css
+@@ -7,16 +7,16 @@
+     padding-left: 20%;
+     padding-right: 20%;
+ } */
+-/* .carousel-item {
+-    padding: 50px; 
+-    /* width: 500px;
+-} */
+-
+-.carousel-item img {
+-    height: 400px;
+-    width: 900px;
++.carousel-item {
++    padding: 100px;
++    /* width: 500px; */
+ }
+ 
++/* .carousel-item img {
++    height: 540px;
++    width: 960px;
++} */
++
+ .card-group {
+     display: flex;
+     flex-wrap: wrap;
+@@ -26,16 +26,20 @@
+     flex: none !important;
+     width: 25%;
+     transition: 0.3s;
+-    
+ }
+-
+-.card-img-top{
+-    height: 35%;
+-    width: 100%;
++.card:hover {
++    background-color: blanchedalmond;
+ }
+ 
+ 
++.card-img-top {
++    width: 100%;
++    height: 15vw;
++    object-fit: cover;
++}
+ 
+-.card:hover {
+-    background-color: blanchedalmond;
++.carousel-item img{
++    width: 100%;
++    height: 50vh;
++    object-fit: cover;
+ }
+\ No newline at end of file
+diff --git a/public/index.html b/public/index.html
+index 0f270d4..15ac5a4 100644
+--- a/public/index.html
++++ b/public/index.html
+@@ -16,8 +16,51 @@
+ </head>
+ 
+ <body>
+-  <div id="nav-placeholder">
+-  </div>
++  <nav class="navbar fixed-top navbar-expand-lg navbar-light bg-light">
++    <div class="container-fluid">
++      <a class="navbar-brand" href="./index.html">Pawrent Paradise</a>
++      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarScroll"
++        aria-controls="navbarScroll" aria-expanded="false" aria-label="Toggle navigation">
++        <span class="navbar-toggler-icon"></span>
++      </button>
++      <div class="collapse navbar-collapse" id="navbarScroll">
++        <ul class="navbar-nav me-auto my-2 my-lg-0 navbar-nav-scroll" style="--bs-scroll-height: 100px;">
++          <li class="nav-item">
++            <a class="nav-link active" aria-current="page" href="./index.html">Home</a>
++          </li>
++          <li class="nav-item">
++            <div id="login">
++              <a class="nav-link" href="./userLogin.html">Log-in</a>
++            </div>
++          </li>
++          <li class="nav-item">
++            <a class="nav-link" href="#register">Sign-up</a>
++          </li>
++          <li class="nav-item dropdown">
++            <a class="nav-link dropdown-toggle" href="#" id="navbarScrollingDropdown" role="button"
++              data-bs-toggle="dropdown" aria-expanded="false">
++              Link
++            </a>
++            <ul class="dropdown-menu" aria-labelledby="navbarScrollingDropdown">
++              <li><a class="dropdown-item" href="#">Action</a></li>
++              <li><a class="dropdown-item" href="#">Another action</a></li>
++              <li>
++                <hr class="dropdown-divider">
++              </li>
++              <li><a class="dropdown-item" href="#review">Write Review</a></li>
++            </ul>
++          </li>
++          <li class="nav-item">
++            <a class="nav-link" href="./review.html">Write Review</a>
++          </li>
++        </ul>
++        <form class="d-flex">
++          <input class="form-control me-2" name="searchName" type="search" placeholder="Search the shop" aria-label="Search">
++          <button class="btn btn-outline-success" type="submit">Search</button>
++        </form>
++      </div>
++    </div>
++  </nav>
+   <br>
+   <!-- my scroll -->
+   <div class="row">
+@@ -46,8 +89,46 @@
+     <div class="col-lg-8">
+       <div class="card-group-container">
+         <div class="card-group">
++          <div class="card">
++            <img class="card-img-top" src="/cats/cat1.jpeg" alt="Card image cap">
++            <div class="card-body">
++              <h5 class="card-title">Card title</h5>
++              <p class="card-text">This is a wider card with supporting text below as a natural lead-in to additional
++                content.
++                This content is a little bit longer.</p>
++              <p class="card-text"><small class="text-muted">Last updated 3 mins ago</small></p>
++            </div>
++          </div>
++          <div class="card">
++            <img class="card-img-top" src="/cats/cat1.jpeg" alt="Card image cap">
++            <div class="card-body">
++              <h5 class="card-title">Shop Name</h5>
++              <p class="card-text">This card has supporting text below as a natural lead-in to additional content.</p>
++              <p class="card-text"><small class="text-muted"></small></p>
++            </div>
++          </div>
++          <div class="card">
++            <img class="card-img-top" src="/cats/cat1.jpeg" alt="Card image cap">
++            <div class="card-body">
++              <h5 class="card-title">Card title</h5>
++              <p class="card-text">This is a wider card with supporting text below as a natural lead-in to additional
++                content.
++                This card has even longer content than the first to show that equal height action.</p>
++              <p class="card-text"><small class="text-muted">district</small></p>
++            </div>
++          </div>
++          <div class="card">
++            <img class="card-img-top" src="/cats/cat1.jpeg" alt="Card image cap">
++            <div class="card-body">
++              <h5 class="card-title">Card title</h5>
++              <p class="card-text">This is a wider card with supporting text below as a natural lead-in to additional
++                content.
++                This card has even longer content than the first to show that equal height action.</p>
++              <p class="card-text"><small class="text-muted">Last updated 3 mins ago</small></p>
++            </div>
++          </div>
+         </div>
+-      </div> 
++      </div>
+     </div>
+   </div>
+ 
+@@ -61,17 +142,13 @@
+   <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js"
+     integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN"
+     crossorigin="anonymous"></script>
+-  <script src="//code.jquery.com/jquery.min.js"></script>
+   <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js"
+     integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q"
+     crossorigin="anonymous"></script>
+   <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js"
+     integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl"
+     crossorigin="anonymous"></script>
+-  <script src="index.js"></script>
+-  <script src="nav.js"></script>
+-
+-
++    <script src="index.js"></script>
+ </body>
+ 
+-</html>
++</html>
+\ No newline at end of file
+diff --git a/public/index.js b/public/index.js
+index 6ac5755..80f1cf4 100644
+--- a/public/index.js
++++ b/public/index.js
+@@ -1,6 +1,6 @@
+-window.addEventListener("load", async function(event) {
+-  await loadHomePage()
+-})
++window.onload = async () =>{
++    await loadHomePage()
++}
+ 
+ 
+ async function loadHomePage(){
+@@ -10,15 +10,14 @@ async function loadHomePage(){
+ 
+     let htmlStr = ``
+     for (const shop of shopList){
+-        const img = `<img class="card-img-top embed-responsive-item" src="/images/${shop.image}" alt="" srcset="">`;
+-        
++        const img = `<img class="card-img-top" src="/images/${shop.image}" alt="" srcset="">`;
+         htmlStr +=  `<div class="card">
+         ${img}
+         <div class="card-body">
+         <h5 class="card-title">${shop.shop_name}</h5>
+           <p class="card-text">${shop.address}</p>
+           <p class="card-text"><small class="text-muted">District:</small>${shop.district}</p>
+-          <a href="./review.html?id=${shop.id}">Go To This Shop</a>
++          <a href="./review.html?shop_id=${shop.id}">Go To This Shop</a>
+         </div>
+       </div>`
+     }
+@@ -37,4 +36,4 @@ async function loadHomePage(){
+ 
+     scroll = scroll.innerHTML
+     
+-}
++}
+\ No newline at end of file
+diff --git a/public/login.js b/public/login.js
+index 4afe268..ad6baa2 100644
+--- a/public/login.js
++++ b/public/login.js
+@@ -2,17 +2,12 @@ window.onload = function(){
+     const searchParams = new URLSearchParams(window.location.search);
+     const errMessage = searchParams.get('error');
+ 
+-    if(errMessage=='incorrect'){
++    if(errMessage){
+         const alertBox = document.createElement('div');
+         alertBox.classList.add('alert','alert-danger');
+-        alertBox.textContent = "Invalid username or password";
++        alertBox.textContent = errMessage;
+         document.querySelector('#error-message').appendChild(alertBox);
++    }else{
++        document.querySelector('#error-message').innerHTML = "Invalid username or password";
+     }
+-    // else{
+-    //     document.querySelector('#error-message').innerHTML = "Invalid username or password";
+-    // }
+-}
+-
+-
+-
+-
++}
+\ No newline at end of file
+diff --git a/public/logout.js b/public/logout.js
+new file mode 100644
+index 0000000..aa36099
+--- /dev/null
++++ b/public/logout.js
+@@ -0,0 +1,14 @@
++const { request } = require("express")
++
++window.onload = async() =>{
++    logoutFunction()
++}
++
++
++async function logoutFunction() {
++    const resp = await fetch('/check login')
++    const result = await resp.json()
++    if(result.status){
++        
++    }
++}
+\ No newline at end of file
+diff --git a/public/nav.js b/public/nav.js
+deleted file mode 100644
+index 1e0d047..0000000
+--- a/public/nav.js
++++ /dev/null
+@@ -1,60 +0,0 @@
+-document.addEventListener("DOMContentLoaded", function() { 
+-    
+-    let navStr = `
+-        <nav class="navbar fixed-top navbar-expand-lg navbar-light bg-light">
+-        <div class="container-fluid">
+-        <a class="navbar-brand" href="./index.html">Pawrent Paradise</a>
+-        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarScroll"
+-            aria-controls="navbarScroll" aria-expanded="false" aria-label="Toggle navigation">
+-            <span class="navbar-toggler-icon"></span>
+-        </button>
+-        <div class="collapse navbar-collapse" id="navbarScroll">
+-            <ul class="navbar-nav me-auto my-2 my-lg-0 navbar-nav-scroll" style="--bs-scroll-height: 100px;">
+-            <li class="nav-item">
+-                <a class="nav-link active" aria-current="page" href="./index.html">Home</a>
+-            </li>
+-            <li class="nav-item" id="log-in">
+-                <a class="nav-link" href="./userLogin.html">Log-in</a>
+-            </li>
+-            <li class="nav-item" id="sign-up">
+-                <a class="nav-link" href="#register">Sign-up</a>
+-            </li>
+-            <li class="nav-item">
+-                <a class="nav-link" href="./review.html">Write Review</a>
+-            </li>
+-            <li class="nav-item" id="log-out">
+-                <a class="nav-link" href="#register">Log-out</a>
+-            </li>
+-            <li class="nav-item" id="profile">
+-            </li>
+-            
+-            </ul>
+-            <form class="d-flex">
+-            <input class="form-control me-2" type="search" placeholder="Search the shop" aria-label="Search">
+-            <button class="btn btn-outline-success" type="submit">Search</button>
+-            </form>
+-        </div>
+-        </div>
+-    </nav>
+-    `
+-    document.querySelector('#nav-placeholder').innerHTML = navStr
+-
+-    console.log('inside nav.js')
+-    console.log(sessionStorage.getItem('status'))
+-    console.log(sessionStorage.getItem('username'))
+-    if(sessionStorage.getItem('status')=="loggedIn"){
+-
+-        const userBox = document.createElement('a');
+-        userBox.classList.add("nav-link")
+-        userBox.href="userInfo.html"
+-        userBox.textContent = `${sessionStorage.getItem('username')}`;
+-        document.querySelector('#profile').appendChild(userBox);
+-        document.getElementById("log-in").style.display = "none";
+-        document.getElementById("sign-up").style.display = "none";
+-
+-    }
+-    else{
+-        document.getElementById("log-out").style.display = "none";
+-
+-    }
+-});
+diff --git a/public/question.md b/public/question.md
+new file mode 100644
+index 0000000..34f3f3d
+--- /dev/null
++++ b/public/question.md
+@@ -0,0 +1,12 @@
++# 2021-10-22
++4 goals for project
++- [ ] upper html part
++- [ ] join table? show him table structure
++- [ ] hard code problems -- difference database have to hard code the shop_id without join table
++- [ ] how to rating? app.ts route and js
++- [ ] how to use req.params show difference pages
++
++afternoon:
++- [ ] after I join the table I got 56 queries
++- [ ] how to show the shops details with photo
++- [ ] reply -> map cms?
+diff --git a/public/review.html b/public/review.html
+index 20bf309..f754b3d 100644
+--- a/public/review.html
++++ b/public/review.html
+@@ -6,9 +6,9 @@
+     <meta name="viewport" content="width=device-width, initial-scale=1">
+     <meta http-equiv="X-UA-Compatible" content="IE=edge">
+     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet" type="text/css"
++    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet"
+         integrity="sha384-1BmE4kWBq78iYhFldvKuhfTAU6auU8tT94WrHftjDbrCEXSU1oBoqyl2QvZ6jIW3" crossorigin="anonymous">
+-    <link href="https://maxcdn.bootstrapcdn.com/font-awesome/4.3.0/css/font-awesome.min.css" rel="stylesheet" type="text/css">
++    <link href="https://maxcdn.bootstrapcdn.com/font-awesome/4.3.0/css/font-awesome.min.css" rel="stylesheet">
+ 
+     <!-- <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.15.4/css/all.css"
+         integrity="sha384-DyZ88mC6Up2uqS4h/KRgHuoeGwBcD4Ng9SiP4dIRy0EXTlnuz47vAwmeGwVChigm" crossorigin="anonymous"> -->
+@@ -21,8 +21,49 @@
+ <body>
+     <!-- only navbar &carousel hv preset id -->
+     <!----------------------------- navbar -------------------------------------- -->
+-    <div id="nav-placeholder"></div>
+-    
++    <nav class="navbar fixed-top navbar-expand-lg navbar-light bg-light">
++        <div class="container-fluid">
++            <a class="navbar-brand" href="#">Pawrent Paradise</a>
++            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarScroll"
++                aria-controls="navbarScroll" aria-expanded="false" aria-label="Toggle navigation">
++                <span class="navbar-toggler-icon"></span>
++            </button>
++            <div class="collapse navbar-collapse" id="navbarScroll">
++                <ul class="navbar-nav me-auto my-2 my-lg-0 navbar-nav-scroll" style="--bs-scroll-height: 100px;">
++                    <li class="nav-item">
++                        <a class="nav-link active" aria-current="page" href="./index.html">Home</a>
++                    </li>
++                    <li class="nav-item">
++                        <a class="nav-link" href="./userLogin.html">Log-in</a>
++                    </li>
++                    <li class="nav-item">
++                        <a class="nav-link" href="#register">Sign-up</a>
++                    </li>
++                    <li class="nav-item dropdown">
++                        <a class="nav-link dropdown-toggle" href="#" id="navbarScrollingDropdown" role="button"
++                            data-bs-toggle="dropdown" aria-expanded="false">
++                            Link
++                        </a>
++                        <ul class="dropdown-menu" aria-labelledby="navbarScrollingDropdown">
++                            <li><a class="dropdown-item" href="#">Action</a></li>
++                            <li><a class="dropdown-item" href="#">Another action</a></li>
++                            <li>
++                                <hr class="dropdown-divider">
++                            </li>
++                            <li><a class="dropdown-item" href="./review.html">Write Review</a></li>
++                        </ul>
++                    </li>
++                    <li class="nav-item">
++                        <a class="nav-link" href="./review.html">Write Review</a>
++                    </li>
++                </ul>
++                <form class="d-flex">
++                    <input class="form-control me-2" type="search" placeholder="Search the shop" aria-label="Search">
++                    <button class="btn btn-outline-success" type="submit">Search</button>
++                </form>
++            </div>
++        </div>
++    </nav>
+     <!---------------------------------- banner--------------------------------- -->
+     <div class="w3-content">
+         <img class="mySlides" src="./banner/dog1.jpg" alt="custom_html_banner1" style="width:100%">
+@@ -220,10 +261,7 @@
+     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"
+         integrity="sha384-ka7Sk0Gln4gmtz2MlQnikT1wXgYsOg+OMhuP+IlRH9sENBO0LRn5q+8nbTov4+1p"
+         crossorigin="anonymous"></script>
+-    <script src="//code.jquery.com/jquery.min.js"></script>
+-    <script src='review.js'></script>
+-    <script src="nav.js"></script>
+-
++    <script src='./review.js'></script>
+ </body>
+ 
+ </html>
+\ No newline at end of file
+diff --git a/public/review.js b/public/review.js
+index e36cfe8..f2cec33 100644
+--- a/public/review.js
++++ b/public/review.js
+@@ -21,236 +21,241 @@ function showDivs(n) {
+ 
+ //may need to add login ,see wsp10-ex
+ window.onload = async () => {
+-//   await loadReviewData();
++  await loadReviewData();
+   initReviewForm();
+ };
+ 
+ function initReviewForm() {
+-  var form = document.getElementById("review-form");
++  const form = document.getElementById("review-form");
+ 
+   form.addEventListener("submit", async function (event) {
+-    form = document.getElementById("review-form");
+-    console.log('posting..', form.reviewText.value)
+     event.preventDefault();
++    // 盡量不用:const form = event.target;event.currentTarget
++    const formData = new FormData();
+ 
+-    const resp = await fetch("/write-review", {
++    formData.append("reviewText", form.reviewText.value);
++    formData.append("uploads", form.reviewImage.files[0]);
++    form.reset();
++    const resp = await fetch("/review", {
+       method: "POST",
+-      headers: { 'Content-Type': 'application/json' },
+-      body: JSON.stringify({reviewText: form.reviewText.value, uploads: form.reviewImage.files[0]})
++      //headers:{'Content-Type': 'application/json'},
++      headers: { enctype: "multipart/form-data" },
++      // body: JSON.stringify(formObj)
++      body: formData,
+     });
+     if (resp.status === 200) {
+       console.log("ok");
+-      // loadReviewData();
++      loadReviewData();
+     }
+-    form.reset();
+-
+   });
+ }
+ 
+-// async function loadReviewData() {
+-//   console.log("enter loadreviewData");
+-//   const current_url = window.location.href;
+-//   const url = new URL(current_url);
+-//   const shop_id = url.searchParams.get("shop_id");
+-//   const resp = await fetch(`/shops/${shop_id}`);
+-//   const data = await resp.json();
+-//   const shop = data.shop;
+-//   const reviews = data.reviews;
+-//   console.log(shop);
+-//   console.log(reviews);
+-//   let htmlStr = ``;
+-//   if (resp.status == 200) {
+-//     for (const review of reviews) {
+-//       const image = review.image
+-//         ? `<img src="/uploads/${review.image} alt="" srcset="">`
+-//         : ``;
+-//       htmlStr += /*HTML*/ `
+-//         <div id='review-${review.id}' class="review" contenteditable='true'>
+-//         <div class="panel-body">
+-//                     <!-- past review & comment (former) Newsfeed Content -->
+-//                     <!--======================================================================-->
+-//                     <div class="media-block">
+-//                         <a class="media-left" href="#"><img class="img-circle img-sm" alt="Profile Picture"
+-//                                 src="https://bootdey.com/img/Content/avatar/avatar1.png"></a>
+-//                         <div class="media-body">
+-//                             <div class="mar-btm">
+-//                                 <a href="#" class="btn-link text-semibold media-heading box-inline">${review.user_id}</a>
+-//                                 <p class="text-muted text-sm"><i class="fa fa-mobile fa-lg"></i> - From Mobile - 11 min
+-//                                     ago</p>
+-//                             </div>
+-//                             <p>${review.review_text}</p>
+-//                             <!--------------------- carousel------------------------------------------------- -->
+-//                             <div id="carouselExampleCaptions" class="carousel slide" data-bs-ride="carousel">
+-//                                 <div class="carousel-indicators">
+-//                                     <button type="button" data-bs-target="#carouselExampleCaptions" data-bs-slide-to="0"
+-//                                         class="active" aria-current="true" aria-label="Slide 1"></button>
+-//                                     <button type="button" data-bs-target="#carouselExampleCaptions" data-bs-slide-to="1"
+-//                                         aria-label="Slide 2"></button>
+-//                                     <button type="button" data-bs-target="#carouselExampleCaptions" data-bs-slide-to="2"
+-//                                         aria-label="Slide 3"></button>
+-//                                     <button type="button" data-bs-target="#carouselExampleCaptions" data-bs-slide-to="3"
+-//                                         aria-label="Slide 4"></button>
+-//                                     <button type="button" data-bs-target="#carouselExampleCaptions" data-bs-slide-to="4"
+-//                                         aria-label="Slide 5"></button>
+-//                                 </div>
+-//                                 <div class="carousel-inner">
+-//                                     <div class="carousel-item active">
+-//                                         <img src="./carousel/remy1.jpeg" class="d-block w-100" alt="...">
+-//                                         <div class="carousel-caption d-none d-md-block">
+-//                                             <h5>First slide label</h5>
+-//                                             <p>Some representative placeholder content for the first slide.</p>
+-//                                         </div>
+-//                                     </div>
+-//                                     <div class="carousel-item">
+-//                                         <img src="./carousel/remy2.jpeg" class="d-block w-100" alt="...">
+-//                                         <div class="carousel-caption d-none d-md-block">
+-//                                             <h5>Second slide label</h5>
+-//                                             <p>Some representative placeholder content for the second slide.</p>
+-//                                         </div>
+-//                                     </div>
+-//                                     <div class="carousel-item">
+-//                                         <img src="./carousel/remy3.jpeg" class="d-block w-100" alt="...">
+-//                                         <div class="carousel-caption d-none d-md-block">
+-//                                             <h5>Third slide label</h5>
+-//                                             <p>Some representative placeholder content for the third slide.</p>
+-//                                         </div>
+-//                                     </div>
+-//                                     <div class="carousel-item">
+-//                                         <img src="./carousel/f1-hug.jpeg" class="d-block w-100" alt="...">
+-//                                         <div class="carousel-caption d-none d-md-block">
+-//                                             <h5>Third slide label</h5>
+-//                                             <p>Some representative placeholder content for the third slide.</p>
+-//                                         </div>
+-//                                     </div>
+-//                                     <div class="carousel-item">
+-//                                         <img src="./carousel/openrice.jpg" class="d-block w-100" alt="...">
+-//                                         <div class="carousel-caption d-none d-md-block">
+-//                                             <h5>Third slide label</h5>
+-//                                             <p>Some representative placeholder content for the third slide.</p>
+-//                                         </div>
+-//                                     </div>
+-//                                 </div>
+-//                                 <button class="carousel-control-prev" type="button"
+-//                                     data-bs-target="#carouselExampleCaptions" data-bs-slide="prev">
+-//                                     <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+-//                                     <span class="visually-hidden">Previous</span>
+-//                                 </button>
+-//                                 <button class="carousel-control-next" type="button"
+-//                                     data-bs-target="#carouselExampleCaptions" data-bs-slide="next">
+-//                                     <span class="carousel-control-next-icon" aria-hidden="true"></span>
+-//                                     <span class="visually-hidden">Next</span>
+-//                                 </button>
+-//                             </div>
+-//                             <!----------------- carousel ended---------------------------------------- -->
+-//                             <div class="pad-ver">
+-//                                 <div class="btn-group">
+-//                                     <a class="btn btn-sm btn-default btn-hover-success" href="#"><i
+-//                                             class="fa fa-thumbs-up"></i></a>
+-//                                     <a class="btn btn-sm btn-default btn-hover-danger" href="#"><i
+-//                                             class="fa fa-thumbs-down"></i></a>
+-//                                 </div>
+-//                                 <a class="btn btn-sm btn-default btn-hover-primary" href="#">Comment</a>
+-//                             </div>
+-//                             <hr>
++async function loadReviewData() {
++  console.log("enter loadreviewData");
++  const current_url = window.location.href;
++  const url = new URL(current_url);
++  const shop_id = url.searchParams.get("shop_id");
++  console.log(shop_id)
++  const resp = await fetch(`/shops/${shop_id}`);
++  const data = await resp.json();
++  console.log(data)
++  const shop = data.shop;
++  const reviews = data.reviews;
++  console.log(shop);
++  console.log(reviews);
++  let htmlStr = ``;
++  if (resp.status == 200) {
++    for (const review of reviews) {
++      const image = review.image
++        ? `<img src="/uploads/${review.image} alt="" srcset="">`
++        : ``;
++      htmlStr += /*HTML*/ `
++        <div id='review-${review.id}' class="review" contenteditable='true'>
++        <div class="panel-body">
++                    <!-- past review & comment (former) Newsfeed Content -->
++                    <!--======================================================================-->
++                    <div class="media-block">
++                        <a class="media-left" href="#"><img class="img-circle img-sm" alt="Profile Picture"
++                                src="https://bootdey.com/img/Content/avatar/avatar1.png"></a>
++                        <div class="media-body">
++                            <div class="mar-btm">
++                                <a href="#" class="btn-link text-semibold media-heading box-inline">${review.user_id}</a>
++                                <p class="text-muted text-sm"><i class="fa fa-mobile fa-lg"></i> - From Mobile - 11 min
++                                    ago</p>
++                            </div>
++                            <p>${review.review_text}</p>
++                            <!--------------------- carousel------------------------------------------------- -->
++                            <div id="carouselExampleCaptions" class="carousel slide" data-bs-ride="carousel">
++                                <div class="carousel-indicators">
++                                    <button type="button" data-bs-target="#carouselExampleCaptions" data-bs-slide-to="0"
++                                        class="active" aria-current="true" aria-label="Slide 1"></button>
++                                    <button type="button" data-bs-target="#carouselExampleCaptions" data-bs-slide-to="1"
++                                        aria-label="Slide 2"></button>
++                                    <button type="button" data-bs-target="#carouselExampleCaptions" data-bs-slide-to="2"
++                                        aria-label="Slide 3"></button>
++                                    <button type="button" data-bs-target="#carouselExampleCaptions" data-bs-slide-to="3"
++                                        aria-label="Slide 4"></button>
++                                    <button type="button" data-bs-target="#carouselExampleCaptions" data-bs-slide-to="4"
++                                        aria-label="Slide 5"></button>
++                                </div>
++                                <div class="carousel-inner">
++                                    <div class="carousel-item active">
++                                        <img src="./carousel/remy1.jpeg" class="d-block w-100" alt="...">
++                                        <div class="carousel-caption d-none d-md-block">
++                                            <h5>First slide label</h5>
++                                            <p>Some representative placeholder content for the first slide.</p>
++                                        </div>
++                                    </div>
++                                    <div class="carousel-item">
++                                        <img src="./carousel/remy2.jpeg" class="d-block w-100" alt="...">
++                                        <div class="carousel-caption d-none d-md-block">
++                                            <h5>Second slide label</h5>
++                                            <p>Some representative placeholder content for the second slide.</p>
++                                        </div>
++                                    </div>
++                                    <div class="carousel-item">
++                                        <img src="./carousel/remy3.jpeg" class="d-block w-100" alt="...">
++                                        <div class="carousel-caption d-none d-md-block">
++                                            <h5>Third slide label</h5>
++                                            <p>Some representative placeholder content for the third slide.</p>
++                                        </div>
++                                    </div>
++                                    <div class="carousel-item">
++                                        <img src="./carousel/f1-hug.jpeg" class="d-block w-100" alt="...">
++                                        <div class="carousel-caption d-none d-md-block">
++                                            <h5>Third slide label</h5>
++                                            <p>Some representative placeholder content for the third slide.</p>
++                                        </div>
++                                    </div>
++                                    <div class="carousel-item">
++                                        <img src="./carousel/openrice.jpg" class="d-block w-100" alt="...">
++                                        <div class="carousel-caption d-none d-md-block">
++                                            <h5>Third slide label</h5>
++                                            <p>Some representative placeholder content for the third slide.</p>
++                                        </div>
++                                    </div>
++                                </div>
++                                <button class="carousel-control-prev" type="button"
++                                    data-bs-target="#carouselExampleCaptions" data-bs-slide="prev">
++                                    <span class="carousel-control-prev-icon" aria-hidden="true"></span>
++                                    <span class="visually-hidden">Previous</span>
++                                </button>
++                                <button class="carousel-control-next" type="button"
++                                    data-bs-target="#carouselExampleCaptions" data-bs-slide="next">
++                                    <span class="carousel-control-next-icon" aria-hidden="true"></span>
++                                    <span class="visually-hidden">Next</span>
++                                </button>
++                            </div>
++                            <!----------------- carousel ended---------------------------------------- -->
++                            <div class="pad-ver">
++                                <div class="btn-group">
++                                    <a class="btn btn-sm btn-default btn-hover-success" href="#"><i
++                                            class="fa fa-thumbs-up"></i></a>
++                                    <a class="btn btn-sm btn-default btn-hover-danger" href="#"><i
++                                            class="fa fa-thumbs-down"></i></a>
++                                </div>
++                                <a class="btn btn-sm btn-default btn-hover-primary" href="#">Comment</a>
++                            </div>
++                            <hr>
+ 
+-//                             <!-- 2 Comments              :aka reply the above review-->
+-//                             <div>
+-//                                 <div class="media-block">
+-//                                     <a class="media-left" href="#"><img class="img-circle img-sm" alt="Profile Picture"
+-//                                             src="https://bootdey.com/img/Content/avatar/avatar2.png"></a>
+-//                                     <div class="media-body">
+-//                                         <div class="mar-btm">
+-//                                             <a href="#" class="btn-link text-semibold media-heading box-inline">Bobby
+-//                                                 Marz</a>
+-//                                             <p class="text-muted text-sm"><i class="fa fa-mobile fa-lg"></i> - From
+-//                                                 Mobile - 7 min ago</p>
+-//                                         </div>
+-//                                         <p>Sed diam nonummy nibh euismod tincidunt ut laoreet dolore magna aliquam erat
+-//                                             volutpat. Ut wisi enim ad minim veniam, quis nostrud exerci tation
+-//                                             ullamcorper suscipit lobortis nisl ut aliquip ex ea commodo consequat.</p>
+-//                                         <div class="pad-ver">
+-//                                             <div class="btn-group">
+-//                                                 <a class="btn btn-sm btn-default btn-hover-success active" href="#"><i
+-//                                                         class="fa fa-thumbs-up"></i> You Like it</a>
+-//                                                 <a class="btn btn-sm btn-default btn-hover-danger" href="#"><i
+-//                                                         class="fa fa-thumbs-down"></i></a>
+-//                                             </div>
+-//                                             <a class="btn btn-sm btn-default btn-hover-primary" href="#">Comment</a>
+-//                                         </div>
+-//                                         <hr>
+-//                                     </div>
+-//                                 </div>
++                            <!-- 2 Comments              :aka reply the above review-->
++                            <div>
++                                <div class="media-block">
++                                    <a class="media-left" href="#"><img class="img-circle img-sm" alt="Profile Picture"
++                                            src="https://bootdey.com/img/Content/avatar/avatar2.png"></a>
++                                    <div class="media-body">
++                                        <div class="mar-btm">
++                                            <a href="#" class="btn-link text-semibold media-heading box-inline">Bobby
++                                                Marz</a>
++                                            <p class="text-muted text-sm"><i class="fa fa-mobile fa-lg"></i> - From
++                                                Mobile - 7 min ago</p>
++                                        </div>
++                                        <p>Sed diam nonummy nibh euismod tincidunt ut laoreet dolore magna aliquam erat
++                                            volutpat. Ut wisi enim ad minim veniam, quis nostrud exerci tation
++                                            ullamcorper suscipit lobortis nisl ut aliquip ex ea commodo consequat.</p>
++                                        <div class="pad-ver">
++                                            <div class="btn-group">
++                                                <a class="btn btn-sm btn-default btn-hover-success active" href="#"><i
++                                                        class="fa fa-thumbs-up"></i> You Like it</a>
++                                                <a class="btn btn-sm btn-default btn-hover-danger" href="#"><i
++                                                        class="fa fa-thumbs-down"></i></a>
++                                            </div>
++                                            <a class="btn btn-sm btn-default btn-hover-primary" href="#">Comment</a>
++                                        </div>
++                                        <hr>
++                                    </div>
++                                </div>
+ 
+-//                                 <div class="media-block">
+-//                                     <a class="media-left" href="#"><img class="img-circle img-sm" alt="Profile Picture"
+-//                                             src="https://bootdey.com/img/Content/avatar/avatar3.png">
+-//                                     </a>
+-//                                     <div class="media-body">
+-//                                         <div class="mar-btm">
+-//                                             <a href="#" class="btn-link text-semibold media-heading box-inline">Lucy
+-//                                                 Moon</a>
+-//                                             <p class="text-muted text-sm"><i class="fa fa-globe fa-lg"></i> - From Web -
+-//                                                 2 min ago</p>
+-//                                         </div>
+-//                                         <p>Duis autem vel eum iriure dolor in hendrerit in vulputate ?</p>
+-//                                         <div class="pad-ver">
+-//                                             <div class="btn-group">
+-//                                                 <a class="btn btn-sm btn-default btn-hover-success" href="#"><i
+-//                                                         class="fa fa-thumbs-up"></i></a>
+-//                                                 <a class="btn btn-sm btn-default btn-hover-danger" href="#"><i
+-//                                                         class="fa fa-thumbs-down"></i></a>
+-//                                             </div>
+-//                                             <a class="btn btn-sm btn-default btn-hover-primary" href="#">Comment</a>
+-//                                         </div>
+-//                                         <hr>
+-//                                     </div>
+-//                                 </div>
+-//                             </div>
+-//                         </div>
+-//                     </div>
+-//                     <!--===================================================-->
+-//                     <!-- End Newsfeed Content -->
+-//                 </div>
+-//         </div>
+-//   `;
+-//     }
+-//   }
+-//   // const shop = (await resp.json()).data;
+-//   // console.log(shop);
++                                <div class="media-block">
++                                    <a class="media-left" href="#"><img class="img-circle img-sm" alt="Profile Picture"
++                                            src="https://bootdey.com/img/Content/avatar/avatar3.png">
++                                    </a>
++                                    <div class="media-body">
++                                        <div class="mar-btm">
++                                            <a href="#" class="btn-link text-semibold media-heading box-inline">Lucy
++                                                Moon</a>
++                                            <p class="text-muted text-sm"><i class="fa fa-globe fa-lg"></i> - From Web -
++                                                2 min ago</p>
++                                        </div>
++                                        <p>Duis autem vel eum iriure dolor in hendrerit in vulputate ?</p>
++                                        <div class="pad-ver">
++                                            <div class="btn-group">
++                                                <a class="btn btn-sm btn-default btn-hover-success" href="#"><i
++                                                        class="fa fa-thumbs-up"></i></a>
++                                                <a class="btn btn-sm btn-default btn-hover-danger" href="#"><i
++                                                        class="fa fa-thumbs-down"></i></a>
++                                            </div>
++                                            <a class="btn btn-sm btn-default btn-hover-primary" href="#">Comment</a>
++                                        </div>
++                                        <hr>
++                                    </div>
++                                </div>
++                            </div>
++                        </div>
++                    </div>
++                    <!--===================================================-->
++                    <!-- End Newsfeed Content -->
++                </div>
++        </div>
++  `;
++    }
++  }
++  // const shop = (await resp.json()).data;
++  // console.log(shop);
+ 
+-//   // let htmlStr = ``;
+-//   // for (const review of reviews) {
+-//   //   const image = review.image
+-//   //     ? `<img src="/uploads/${review.image} alt="" srcset="">`
+-//   //     : ``;
+-//   //   htmlStr += /*HTML*/ `
+-//   // <div id='review-${review.id}' class="review" contenteditable='true'>
+-//   // ${review.content}
+-//   // ${image}
+-//   // // <div class ="trash-button" onclick="deleteReview(${review.id})">
+-//   // // <i class="fas fa-trash"></i>
+-//   // // </div>
+-//   // // <div class="edit-button" onclick="editReview(${review.id})">
+-//   // // <i clas="fas fa-edit"></i>
+-//   // // </div>
+-//   // </div>
+-//   // `;
+-//   // }
+-//   document.getElementById("review-container").innerHTML = htmlStr;
+-// }
++  // let htmlStr = ``;
++  // for (const review of reviews) {
++  //   const image = review.image
++  //     ? `<img src="/uploads/${review.image} alt="" srcset="">`
++  //     : ``;
++  //   htmlStr += /*HTML*/ `
++  // <div id='review-${review.id}' class="review" contenteditable='true'>
++  // ${review.content}
++  // ${image}
++  // // <div class ="trash-button" onclick="deleteReview(${review.id})">
++  // // <i class="fas fa-trash"></i>
++  // // </div>
++  // // <div class="edit-button" onclick="editReview(${review.id})">
++  // // <i clas="fas fa-edit"></i>
++  // // </div>
++  // </div>
++  // `;
++  // }
++  document.getElementById("review-container").innerHTML = htmlStr;
++}
+ 
+-// // loadReviewData();
++// loadReviewData();
+ 
+-// // Reemo
+-// // const arr = [1, 2, 3, 4, 5];
+-// // const cBox = document.getElementById("cBox");
++// Reemo
++// const arr = [1, 2, 3, 4, 5];
++// const cBox = document.getElementById("cBox");
+ 
+-// // for (let v of arr) {
+-// //   cBox.innerHTML += `
+-// //     <div>
+-// //     <h1>${v}</h1>
+-// //     <h1>${v}</h1>
+-// //     <hr>
+-// //     </div>
+-// //     `;
+-// // }
++// for (let v of arr) {
++//   cBox.innerHTML += `
++//     <div>
++//     <h1>${v}</h1>
++//     <h1>${v}</h1>
++//     <hr>
++//     </div>
++//     `;
++// }
+diff --git a/public/search.html b/public/search.html
+new file mode 100644
+index 0000000..e7582a4
+--- /dev/null
++++ b/public/search.html
+@@ -0,0 +1,154 @@
++<!DOCTYPE html>
++<html lang="en">
++
++<head>
++  <meta charset="UTF-8">
++  <meta http-equiv="X-UA-Compatible" content="IE=edge">
++  <meta name="viewport" content="width=device-width, initial-scale=1.0">
++  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.min.js"
++    integrity="sha384-QJHtvGhmr9XOIpI6YVutG+2QOK9T+ZnN4kzFN1RtK3zEFEIsxhlmWl5/YESvpZ13"
++    crossorigin="anonymous"></script>
++  <title>Homepage</title>
++  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css"
++    integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
++  <link rel="stylesheet" href="./index.css">
++
++</head>
++
++<body>
++  <nav class="navbar fixed-top navbar-expand-lg navbar-light bg-light">
++    <div class="container-fluid">
++      <a class="navbar-brand" href="./index.html">Pawrent Paradise</a>
++      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarScroll"
++        aria-controls="navbarScroll" aria-expanded="false" aria-label="Toggle navigation">
++        <span class="navbar-toggler-icon"></span>
++      </button>
++      <div class="collapse navbar-collapse" id="navbarScroll">
++        <ul class="navbar-nav me-auto my-2 my-lg-0 navbar-nav-scroll" style="--bs-scroll-height: 100px;">
++          <li class="nav-item">
++            <a class="nav-link active" aria-current="page" href="./index.html">Home</a>
++          </li>
++          <li class="nav-item">
++            <div id="login">
++              <a class="nav-link" href="./userLogin.html">Log-in</a>
++            </div>
++          </li>
++          <li class="nav-item">
++            <a class="nav-link" href="#register">Sign-up</a>
++          </li>
++          <li class="nav-item dropdown">
++            <a class="nav-link dropdown-toggle" href="#" id="navbarScrollingDropdown" role="button"
++              data-bs-toggle="dropdown" aria-expanded="false">
++              Link
++            </a>
++            <ul class="dropdown-menu" aria-labelledby="navbarScrollingDropdown">
++              <li><a class="dropdown-item" href="#">Action</a></li>
++              <li><a class="dropdown-item" href="#">Another action</a></li>
++              <li>
++                <hr class="dropdown-divider">
++              </li>
++              <li><a class="dropdown-item" href="#review">Write Review</a></li>
++            </ul>
++          </li>
++          <li class="nav-item">
++            <a class="nav-link" href="./review.html">Write Review</a>
++          </li>
++        </ul>
++        <form class="d-flex">
++          <input class="form-control me-2" type="search" placeholder="Search the shop" aria-label="Search">
++          <button class="btn btn-outline-success" type="submit">Search</button>
++        </form>
++      </div>
++    </div>
++  </nav>
++  <br>
++  <!-- my scroll -->
++  <div class="row">
++    <div class="col-lg-3">
++    </div>
++    <div class="col-lg-6">
++      <div id="carouselExampleSlidesOnly" class="carousel slide" data-ride="carousel">
++        <div class="carousel-inner" id="spanning-carousel">
++          <div class="carousel-item active">
++            <img class="d-block w-100" src="/cats/cat1.jpeg" alt="First slide">
++          </div>
++          <div class="carousel-item">
++            <img class="d-block w-100" src="/cats/cat1.jpeg" alt="Second slide">
++          </div>
++          <div class="carousel-item">
++            <img class="d-block w-100" src="/cats/cat1.jpeg" alt="Third slide">
++          </div>
++        </div>
++      </div>
++    </div>
++  </div>
++
++  <br>
++  <div class="row">
++    <div class="col-lg-2"></div>
++    <div class="col-lg-8">
++      <div class="card-group-container">
++        <div class="card-group">
++          <div class="card">
++            <img class="card-img-top" src="/cats/cat1.jpeg" alt="Card image cap">
++            <div class="card-body">
++              <h5 class="card-title">Card title</h5>
++              <p class="card-text">This is a wider card with supporting text below as a natural lead-in to additional
++                content.
++                This content is a little bit longer.</p>
++              <p class="card-text"><small class="text-muted">Last updated 3 mins ago</small></p>
++            </div>
++          </div>
++          <div class="card">
++            <img class="card-img-top" src="/cats/cat1.jpeg" alt="Card image cap">
++            <div class="card-body">
++              <h5 class="card-title">Shop Name</h5>
++              <p class="card-text">This card has supporting text below as a natural lead-in to additional content.</p>
++              <p class="card-text"><small class="text-muted"></small></p>
++            </div>
++          </div>
++          <div class="card">
++            <img class="card-img-top" src="/cats/cat1.jpeg" alt="Card image cap">
++            <div class="card-body">
++              <h5 class="card-title">Card title</h5>
++              <p class="card-text">This is a wider card with supporting text below as a natural lead-in to additional
++                content.
++                This card has even longer content than the first to show that equal height action.</p>
++              <p class="card-text"><small class="text-muted">district</small></p>
++            </div>
++          </div>
++          <div class="card">
++            <img class="card-img-top" src="/cats/cat1.jpeg" alt="Card image cap">
++            <div class="card-body">
++              <h5 class="card-title">Card title</h5>
++              <p class="card-text">This is a wider card with supporting text below as a natural lead-in to additional
++                content.
++                This card has even longer content than the first to show that equal height action.</p>
++              <p class="card-text"><small class="text-muted">Last updated 3 mins ago</small></p>
++            </div>
++          </div>
++        </div>
++      </div>
++    </div>
++  </div>
++
++  <div>
++    <div class="row" id="colGenBox">
++
++    </div>
++  </div>
++
++
++  <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js"
++    integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN"
++    crossorigin="anonymous"></script>
++  <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js"
++    integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q"
++    crossorigin="anonymous"></script>
++  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js"
++    integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl"
++    crossorigin="anonymous"></script>
++    <script src="search.html"></script>
++</body>
++
++</html>
+\ No newline at end of file
+diff --git a/public/search.js b/public/search.js
+new file mode 100644
+index 0000000..d64d3b5
+--- /dev/null
++++ b/public/search.js
+@@ -0,0 +1,8 @@
++window.onload = () =>{
++    loadSearchResult()
++}
++
++
++async function loadSearchResult(){
++    
++}
+\ No newline at end of file
+diff --git a/public/userLogin.html b/public/userLogin.html
+index 086d836..9fdab30 100644
+--- a/public/userLogin.html
++++ b/public/userLogin.html
+@@ -17,8 +17,52 @@
+ </head>
+ 
+ <body>
+-  <div id="nav-placeholder">
+-  </div>
++  <nav class="navbar fixed-top navbar-expand-lg navbar-light bg-light">
++    <div class="container-fluid">
++      <a class="navbar-brand" href="./index.html">Pawrent Paradise</a>
++      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarScroll"
++        aria-controls="navbarScroll" aria-expanded="false" aria-label="Toggle navigation">
++        <span class="navbar-toggler-icon"></span>
++      </button>
++      <div class="collapse navbar-collapse" id="navbarScroll">
++        <ul class="navbar-nav me-auto my-2 my-lg-0 navbar-nav-scroll" style="--bs-scroll-height: 100px;">
++          <li class="nav-item">
++            <a class="nav-link active" aria-current="page" href="./index.html">Home</a>
++          </li>
++          <li class="nav-item">
++            <a class="nav-link" href="./userLogin.html">Log-in</a>
++          </li>
++          <li class="nav-item">
++            <a class="nav-link" href="#register">Sign-up</a>
++          </li>
++          <li class="nav-item">
++            <a class="nav-link" href="/logout">Logout</a>
++          </li>
++          <li class="nav-item dropdown">
++            <a class="nav-link dropdown-toggle" href="#" id="navbarScrollingDropdown" role="button"
++              data-bs-toggle="dropdown" aria-expanded="false">
++              Link
++            </a>
++            <ul class="dropdown-menu" aria-labelledby="navbarScrollingDropdown">
++              <li><a class="dropdown-item" href="#">Action</a></li>
++              <li><a class="dropdown-item" href="#">Another action</a></li>
++              <li>
++                <hr class="dropdown-divider">
++              </li>
++              <li><a class="dropdown-item" href="#review">Write Review</a></li>
++            </ul>
++          </li>
++          <li class="nav-item">
++            <a class="nav-link" href="./review.html">Write Review</a>
++          </li>
++        </ul>
++        <form class="d-flex">
++          <input class="form-control me-2" type="search" placeholder="Search the shop" aria-label="Search">
++          <button class="btn btn-outline-success" type="submit">Search</button>
++        </form>
++      </div>
++    </div>
++  </nav>
+   <br>
+ 
+   <form method="POST" action="/login" id='login'>
+@@ -44,17 +88,12 @@
+   <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js"
+     integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN"
+     crossorigin="anonymous"></script>
+-  <script src="//code.jquery.com/jquery.min.js"></script>
+   <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js"
+     integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q"
+     crossorigin="anonymous"></script>
+   <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js"
+     integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl"
+     crossorigin="anonymous"></script>
+-  <script src= "./login.js"></script>
+-
+-  <script src="nav.js"></script>
+-
+     <!-- <script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyC-zuhYGHUfk1jap1nxSYC4HnUQybe4tsY&callback=initMap"></script> -->
+ 
+ </body>
+diff --git a/reviewRoutes.ts b/reviewRoutes.ts
+index 2c9c30b..9f6bf29 100644
+--- a/reviewRoutes.ts
++++ b/reviewRoutes.ts
+@@ -1,24 +1,15 @@
+-//former name:on-lecture-下multer.ts
+ import express from 'express'
+ import dotenv from "dotenv";
+ dotenv.config();
+-// import path from 'path'
+-import { client } from './app';
+-// import { readJsonConfigFile } from 'typescript'
+-// import jsonfile from 'jsonfile'
+-// import multer from 'multer'
++import path from 'path'
++import { Client } from "pg";
++import multer from 'multer'
+ 
+ const tables = Object.freeze({
+   reviews: "reviews",
+   review_images: "review_images",
+ });
+ 
+-// type ReviewImage = {
+-//   id: number,
+-//   url: string,
+-//   review_id: number,
+-//   filename?: string | string[] | undefined; // or filename?:string
+-// }
+ type Review = {
+   id: number;
+   shop_id: number;
+@@ -28,35 +19,42 @@ type Review = {
+ }
+ 
+ export const reviewRoutes = express.Router()
++//----------------------------------------------------------------------------------
++
++const storage = multer.diskStorage({
++  destination: function (req, file, cb) {
++    cb(null, path.resolve('./public/uploads'));
++  },
++  filename: function (req, file, cb) {
++    cb(null, `${file.fieldname}-${Date.now()}.${file.mimetype.split('/')[1]}`);
++  }
++})
++const upload = multer({ storage })
+ 
+ //----------------------------------------------------------------------------------
++const client = new Client({
++  database: process.env.DB_NAME,
++  user: process.env.DB_USERNAME,
++  password: process.env.DB_PASSWORD,
++});
+ 
+-// const storage = multer.diskStorage({
+-//   destination: function (req, file, cb) {
+-//     cb(null, path.resolve('./public/uploads'));
+-//   },
+-//   filename: function (req, file, cb) {
+-//     cb(null, `${file.fieldname}-${Date.now()}.${file.mimetype.split('/')[1]}`);
+-//   }
+-// })
+-// const upload = multer({ storage })
++client.connect();
+ 
+ //GET
+ reviewRoutes.get('/review/:shop_id', getReviews);
+-reviewRoutes.post('/write-review', postReview);
+ 
+ async function getReviews(req: express.Request, res: express.Response) {
+   // const shop_id = 
+   // const user_id = ""
+-  const queryResult = await client.query(`SELECT * FROM ${tables.reviews} ORDER BY id DESC`);
++  const queryResult = await client.query(`SELECT * FROM ${tables.reviews} WHERE shop_id = $1 ORDER BY id DESC`,[req.params.shop_id]);
+   const reviews = queryResult.rows;
+   res.json({ data: reviews });
+ }
+ 
+-async function postReview(req: express.Request, res: express.Response) {
++reviewRoutes.post("/review", upload.array("uploads", 6), async function (req, res) {
+   console.log(req.files)
+   console.log(req.body)
+-  console.log('hello review')
++
+   if (req.files) {
+     for (let i = 0; i < req.files.length; i++) {
+ 
+@@ -64,66 +62,22 @@ async function postReview(req: express.Request, res: express.Response) {
+       let filename = req.files[i].filename
+       imagesPerReview.push(filename)
+     }
+-  }
+-  if (req.body){
+     const reviewText = req.body.reviewText; //ok
++    console.log(reviewText);
++    //const imagesPerReview = Array.from(req.files as { filename: string }[]).map(file => file.filename
++
+     try {
+-      await client.query<Review>(/*sql*/ `INSERT INTO ${tables.reviews} (shop_id,user_id,review_text)VALUES($1,$2,$3)`, [1, 3, reviewText])
++      await client.query<Review>(/*sql*/ `INSERT INTO ${tables.reviews} (shop_id,user_id,review_text)VALUES($1,$2,$3)`, [8, 1, reviewText])
+       //await client.query(/*sql*/ `INSERT INTO ${tables.review_images} (url,review_id) VALUES($1,$2)`, [])
+     } catch (err) {
+       console.error(err);
+     }
++
++    res.json({ message: "success" });
+   }
+-  res.json({ message: "success" });
+-}
++  else {
++    res.json({ message: 'error' });
+ 
+-//----------------------------------------------------------------------------------
+-/*
+-app.post('/review', upload.array('profile', 6), async function (req, res) {
+-  console.log(req.files)// req.files is array of `photos` files
+-  console.log(req.body)// req.body will contain the text fields, if there were any
+-  const reviews: Review[] = await jsonfile.readFile(path.join(__dirname, 'datasets', 'reviews.json'))
+-  const reviewImage: ReviewImage = await jsonfile.readFile(path.join(__dirname, 'datasets', 'review-image.json'))
+-  if (req.files) {
+-    //req.files=array//req.files[0].filename-->.map
+-    // reviews.push({ id: reviews.length + 1, name: req.body.studentName, filename: Array.from(req.files as { filename: string }[]).map(file => file.filename) })
+-    reviews.push({
+-      id: reviews.length + 1, //review's id
+-      user_id: 1,
+-      shop_id: 1, //name: req.body.studentName,
+-      reviewImage: [
+-        {
+-          id: 1, //image's id
+-          url: "123",
+-          review_id: reviews.length + 1,
+-          filename: Array.from(req.files as { filename: string }[]).map(file => file.filename),
+-        }
+-      ]
+-    })
+-  } else {
+-    // reviews.push({ id: reviews.length + 1, name: req.body.studentName })
+   }
+-  await jsonfile.writeFile(path.join(__dirname, 'datasets', 'reviews.json'), reviews)
+-  res.redirect('/home.html') //🌟🌟🌟🌟🌟🌟🌟🌟🌟🌟🌟🌟🌟🌟
+ })
+-*/
+-//---------------------------------------------------------------------
+-
+-
+-
+-
+-
+-
+-// app.post('/review', upload.single('profile'), async (req, res) => {
+-//   console.log(req.body) // form tag
+-//   console.log(req.file) // file info, not from req.body
+-//   const reviews: Review[] = await jsonfile.readFile(path.join(__dirname, 'datasets', 'reviews.json'))
+-//   reviews.push({ id: reviews.length + 1, name: req.body.studentName, filename: req.file?.filename })
+-//   await jsonfile.writeFile(path.join(__dirname, 'reviews.json'), reviews)
+-//   res.redirect('/home.html')
+-// })  // former route: students (fr wsp07)
+-
+-
+-
+-
+ 
+diff --git a/searchShopRoutes.ts b/searchShopRoutes.ts
+new file mode 100644
+index 0000000..6e45e2f
+--- /dev/null
++++ b/searchShopRoutes.ts
+@@ -0,0 +1,11 @@
++import express from 'express';
++import {client} from './app';
++
++
++export const searchRoutes = express.Router()
++
++searchRoutes.get('/searchShop',async(req,res)=>{
++    const queryResult = (await client.query('SELECT * FROM shops WHERE shop_name like $1',[`%${req.query.searchName}%`])).rows
++    res.json({queryResult})
++})
++
+diff --git a/shop.json b/shop.json
+deleted file mode 100644
+index 222ed7c..0000000
+--- a/shop.json
++++ /dev/null
+@@ -1,86 +0,0 @@
+-[
+-    {
+-        "id":"1",
+-        "shop_name":"Bobs Paradise",
+-        "description":"We at Bobs Paradise set out to find and provide awesome goods and services for Bob and other furry friends that you won’t find in other regular pet shops.",
+-        "location": "Central",
+-        "address":"G/F, 2 Elgin Street, Central, Hong Kong",
+-        "category":"Pet groomer",
+-        "phone_number": "2529 2544",
+-        "email_address":"",
+-        "opening_hours":"11:00 - 20:00",
+-        "price_range":""
+-    },
+-    {
+-        "id":"2",
+-        "shop_name":"Paw Palace",
+-        "description":"Paw Palace... a Holistic Wellness Retreat for your Pampered Pet!",
+-        "location": "Causeway Bay",
+-        "address":"Unit 4A, Po Foo Building, 1 Foo Ming St, Causeway Bay, Hong Kong",
+-        "category":"Pet groomer",
+-        "phone_number": "2576 7999",
+-        "email_address":"pawpalace@gmail.com",
+-        "opening_hours":"10:00 - 21:00",
+-        "price_range":""
+-    },
+-    {
+-        "id":"3",
+-        "shop_name":"Hot Tails Salon",
+-        "description":"Want the best for your dog? Hot Tails Salon is where you ought to be.",
+-        "location": "Happy Valley",
+-        "address":"1/F, 1 Sing Woo Road, Happy Valley, Hong Kong",
+-        "category":"Pet groomer",
+-        "phone_number": "2892 2226",
+-        "email_address":"htsgrace@gmail.com",
+-        "opening_hours":"10:30 - 19:30",
+-        "price_range":""
+-    },
+-    {
+-        "id":"4",
+-        "shop_name":"Whiskers N Paws",
+-        "description":"Want the best for your dog? Hot Tails Salon is where you ought to be.",
+-        "location": "Ap Lei Chau",
+-        "address":"10/F, Horizon Plaza, 2 Lee Wing Street, Ap Lei Chau, Hong Kong",
+-        "category":"Pet groomer, Retail, Adoption",
+-        "phone_number": "2552 6200",
+-        "email_address":"htsgrace@gmail.com",
+-        "opening_hours":"10:30 - 19:30",
+-        "price_range":""
+-    },
+-    {
+-        "id":"5",
+-        "shop_name":"田園寵物店 Countryside Pet Salon.",
+-        "description":"- 提供專業寵物美容服務，貓狗日式手剪造型等, 專營各國品牌寵物用品、各大優質寵物糧食等。",
+-        "location": "Ap Lei Chau",
+-        "address":"Tsim Sha Tsui, Austin Rd, 154-156號, Garden Mansion, 地舖3號 Hong Kong",
+-        "category":"Pet shop · Pet sitter",
+-        "phone_number": "6699 4660",
+-        "email_address":"bigeyes.petshop@gmail.com",
+-        "opening_hours":"11:00 - 20:30",
+-        "price_range":""
+-    },
+-    {
+-        "id":"6",
+-        "shop_name":"雲尼寵物屋 Winny Pet House",
+-        "description":"- 提供專業寵物美容服務，貓狗日式手剪造型等, 專營各國品牌寵物用品、各大優質寵物糧食等。",
+-        "location": "Kwai Chung",
+-        "address":"葵涌和宜合道138號-184號瑞景大廈地下舖28A舖",
+-        "category":"Pet Groomer, Retail",
+-        "phone_number": "90771861",
+-        "email_address":"",
+-        "opening_hours":"11:00 - 20:00",
+-        "price_range":""
+-    },
+-    {
+-        "id":"7",
+-        "shop_name":"The Dogs Garden",
+-        "description":"- 提供專業寵物美容服務，貓狗日式手剪造型等, 專營各國品牌寵物用品、各大優質寵物糧食等。",
+-        "location": "Southern",
+-        "address":"Shop 209, 2/F, The Pulse, Repulse Bay Beach, 28 Beach Road, Repulse Bay, Hong Kong",
+-        "category":"Pet Groomer, Retail",
+-        "phone_number": "9833 5270",
+-        "email_address":"",
+-        "opening_hours":"10:30 - 19:00",
+-        "price_range":""
+-    }
+-]
+\ No newline at end of file
+diff --git a/shop.session.sql b/shop.session.sql
+deleted file mode 100644
+index 30eb7b9..0000000
+--- a/shop.session.sql
++++ /dev/null
+@@ -1,116 +0,0 @@
+-CREATE TABLE users(
+-    id SERIAL PRIMARY KEY,
+-    username varchar(255) NOT NULL UNIQUE,
+-    email varchar(255) NOT NULL UNIQUE,
+-    password varchar(255) NOT NULL,
+-    created_at TIMESTAMP,
+-    updated_at TIMESTAMP
+-);
+-
+-CREATE TABLE location(
+-    id SERIAL PRIMARY KEY,
+-    destrict VARCHAR(255),
+-    address VARCHAR(255)
+-);
+-
+-CREATE TABLE shop(
+-    id SERIAL PRIMARY KEY,
+-    shop_name varchar(255) UNIQUE,
+-    description TEXT,
+-    location_id INT,
+-    FOREIGN KEY (location_id) REFERENCES location(id),    
+-    category varchar(255),
+-    phone_number INTEGER,
+-    email_address varchar(255),
+-    opening_hours varchar(255),
+-    price_range varchar(255),
+-    created_at TIMESTAMP,
+-    updated_at TIMESTAMP
+-);
+-
+-CREATE TABLE shop_image(
+-    id SERIAL PRIMARY KEY,
+-    url varchar(255) UNIQUE,
+-    shop_id INTEGER,
+-    FOREIGN KEY (shop_id) REFERENCES shop(id)
+-);
+-
+-CREATE TABLE review(
+-    id SERIAL PRIMARY KEY,
+-    user_id INTEGER,
+-    shop_id INTEGER,
+-    FOREIGN KEY (user_id) REFERENCES users(id),
+-    FOREIGN KEY (shop_id) REFERENCES shop(id)
+-);
+-
+-CREATE TABLE review_image(
+-    id SERIAL PRIMARY KEY,
+-    url varchar(255) UNIQUE,
+-    review_id INTEGER,
+-    FOREIGN KEY (review_id) REFERENCES review(id)
+-);
+-
+-CREATE TABLE comment(
+-    id SERIAL PRIMARY KEY,
+-    user_id INTEGER,
+-    review_id INTEGER,
+-    FOREIGN KEY (user_id) REFERENCES users(id),
+-    FOREIGN KEY (review_id) REFERENCES review(id)
+-);
+-
+-CREATE TABLE rating(
+-    id SERIAL PRIMARY KEY,
+-    rating INTEGER,
+-    user_id INTEGER,
+-    shop_id INTEGER,
+-    review_id INTEGER,
+-    FOREIGN KEY (user_id) REFERENCES users(id),
+-    FOREIGN KEY (shop_id) REFERENCES shop(id)
+-);
+-
+--- -- SELECT * FROM user;
+--- -- SELECT * FROM shop;
+--- -- SELECT * FROM review;
+--- -- SELECT * FROM comment;
+--- -- SELECT * FROM rating;
+-
+--- -- insert into users (username,password,created_at,updated_at) VALUES ('gordon@tecky.io','1234','NOW()','NOW()');
+-
+-INSERT into shop(id, 
+-shop_name, 
+-description, 
+-location_id,  
+-category, 
+-phone_number, 
+-email_address, 
+-opening_hours)
+-VALUES (1, 
+-'Bobs Paradise',
+-'We at Bobs Paradise set out to find and provide awesome goods and services for Bob and other furry friends that you won’t find in other regular pet shops.',
+-1, 
+-'Pet groomer',
+-25292544,
+-NULL,
+-'11:00 - 20:00');
+-
+-INSERT into location(
+-    id,
+-    destrict,
+-    address
+-)VALUES(
+-    1, 
+-    'Central',
+-    'G/F, 2 Elgin Street, Central, Hong Kong'
+-);
+-INSERT into users(
+-    id,
+-    username,
+-    email,
+-    password,
+-)VALUES(
+-    1, 
+-    'janet',
+-    'janetsoong.0124@gmail.com',
+-    '12345'
+-);
+-
+diff --git a/shops.session.sql b/shops.session.sql
+deleted file mode 100644
+index 45b361a..0000000
+--- a/shops.session.sql
++++ /dev/null
+@@ -1,108 +0,0 @@
+-CREATE TABLE user(
+-    id SERIAL PRIMARY KEY,
+-    username varchar(255) NOT NULL UNIQUE,
+-    email varchar(255) NOT NULL UNIQUE,
+-    password varchar(255)NOT NULL,
+-    created_at TIMESTAMP,
+-    updated_at TIMESTAMP
+-)
+-
+-CREATE TABLE shop(
+-    id SERIAL PRIMARY KEY,
+-    shop_name varchar(255) UNIQUE,
+-    description TEXT,
+-    location varchar(255),
+-    phone_number INTEGER,
+-    email_address varchar(255),
+-    created_at TIMESTAMP,
+-    updated_at TIMESTAMP
+-)
+-
+-
+-
+-CREATE TABLE shop_image(
+-    id SERIAL PRIMARY KEY,
+-    url varchar(255) UNIQUE,
+-    shop_id INTEGER,
+-    FOREIGN KEY (shop_id) REFERENCES shop(id)
+-)
+-
+-CREATE TABLE review(
+-    id SERIAL PRIMARY KEY,
+-    user_id INTEGER,
+-    shop_id INTEGER,
+-    FOREIGN KEY (user_id) REFERENCES user(id),
+-    FOREIGN KEY (shop_id) REFERENCES shop(id),
+-)
+-
+-CREATE TABLE review_image(
+-    id SERIAL PRIMARY KEY,
+-    url varchar(255) UNIQUE,
+-    review_id INTEGER,
+-    FOREIGN KEY (review_id) REFERENCES review(id)
+-)
+-
+-CREATE TABLE comment(
+-    id SERIAL PRIMARY KEY,
+-    user_id INTEGER,
+-    review_id INTEGER,
+-    FOREIGN KEY (user_id) REFERENCES user(id),
+-    FOREIGN KEY (review_id) REFERENCES review(id)
+-)
+-
+-CREATE TABLE rating(
+-    id SERIAL PRIMARY KEY,
+-    rating INTEGER,
+-    user_id INTEGER,
+-    shop_id INTEGER,
+-    review_id INTEGER,
+-    FOREIGN KEY (user_id) REFERENCES user(id),
+-    FOREIGN KEY (shop_id) REFERENCES shop(id)
+-)
+-
+-
+-
+-SELECT * FROM user;
+-SELECT * FROM shop;
+-SELECT * FROM review;
+-SELECT * FROM comment;
+-SELECT * FROM rating;
+-
+-INSERT into shop(id, 
+-shop_name, 
+-description, 
+-location_id,  
+-category, 
+-phone_number, 
+-email_address, 
+-opening_hours)
+-VALUES (1, 
+-'Bobs Paradise',
+-'We at Bobs Paradise set out to find and provide awesome goods and services for Bob and other furry friends that you won’t find in other regular pet shops.',
+-1, 
+-'Pet groomer',
+-25292544,
+-NULL,
+-'11:00 - 20:00');
+-
+-INSERT into location(
+-    id,
+-    destrict,
+-    address
+-)VALUES(
+-    1, 
+-    'Central',
+-    'G/F, 2 Elgin Street, Central, Hong Kong'
+-);
+-INSERT into users(
+-    id,
+-    username,
+-    email,
+-    password,
+-)VALUES(
+-    1, 
+-    'janet',
+-    'janetsoong.0124@gmail.com',
+-    '12345'
+-);
+-
+diff --git a/table.sql b/table.sql
+index f993271..4578af1 100644
+--- a/table.sql
++++ b/table.sql
+@@ -23,8 +23,6 @@ CREATE TABLE shops(
+     FOREIGN KEY (district_id) REFERENCES districts(id),
+     address VARCHAR(255),
+     district TEXT,
+-    -- image_id INTEGER,
+-    -- FOREIGN KEY (image_id) REFERENCES images(id),
+     category varchar(255),
+     phone_number INTEGER,
+     email_address varchar(255),
+@@ -95,8 +93,6 @@ values ('janet', 5678);
+ -- from images;
+ -- ALTER TABLE images
+ -- ADD COLUMN shop_id integer;
+-insert into images(image)
+-VALUES ('images.jpeg');
+ insert into districts(district)
+ values ('Tai Po');
+ insert into districts(district)
+@@ -108,32 +104,8 @@ values ('Tsuen Wan');
+ insert into districts(district)
+ values ('Mong Kok'),
+     ('Causeway Bay');
+-insert into images (image, shop_id)
+-values (
+-        'Mega_Pet/Mega_Pet1.jpeg',
+-        (
+-            SELECT id
+-            from shops
+-            WHERE shop_name = 'Mega_Pet'
+-        )
+-    );
+-insert into images (image, shop_id)
+-values ('Dogotel_&_SPA/Dogotel_&_SPA1.jpeg', 7);
+-insert into images (image, shop_id)
+-values ('Bobs_Paradise/bobs_paradise1.jpeg', 2);
+-insert into images (image, shop_id)
+-values (
+-        'Jacks_Pet_Grooming_Shop/Jacks_Pet_Grooming_Shop1.png',
+-        1
+-    );
+-insert into images (image, shop_id)
+-values ('Hot_Tails_Salon/Hot_Tails_Salon1.jpeg', 3);
+-insert into images (image, shop_id)
+-values ('Paw_Palace/Paw_Palace1.jpeg', 4);
+-insert into images (image, shop_id)
+-values ('Whiskers_N_Paws/Whiskers_N_Paws3.png', 5);
+-insert into images (image, shop_id)
+-values ('Honey_Pet_Shop/Honey_Pet_Shop_1.jpeg', 6);
++
++SELECT * from shops;
+ insert into shops(
+         shop_name,
+         description,
+@@ -178,6 +150,7 @@ values (
+         '10:30 - 19:30',
+         '300-499'
+     );
++
+ insert into shops(
+         shop_name,
+         description,
+@@ -288,6 +261,7 @@ values (
+         '10:30 - 19:30',
+         '300-353'
+     );
++
+ insert into shops(
+         shop_name,
+         description,
+@@ -301,33 +275,17 @@ insert into shops(
+     )
+ values (
+         'Honey Pet Shop',
+-        'Start our business from 1989, we promise to offer your pet with the best experiences of pet grooming',
+-        'North Point',
+-        '304 Electric Rd, North Point',
+-        null '25701028',
++        'With 30 years experiences we offer the best',
++        'Aberdeen',
++        'Abba Commercial Building No.223-227 Aberdeen Main Rd Aberdeen',
++        'Pet groomer',
++        '25180022',
+         null,
+         '10:30 - 19:30',
+         '300-499'
+     );
+--- insert into shops(
+---         shop_name,
+---         description,
+---         district,
+---         address,
+---         category,
+---         phone_number,
+---         email_address,
+---         opening_hours,
+---         price_range
+---     )
+--- values (
+---         'Honey Pet Shop',
+---         'With 30 years experiences we offer the best',
+---         'Aberdeen',
+---         'Abba Commercial Building No.223-227 Aberdeen Main Rd Aberdeen',
+---         'Pet groomer',
+---         '25180022',
+---         null,
+---         '10:30 - 19:30',
+---         '300-499'
+---     );
+\ No newline at end of file
++
++
++drop table reviews;
++select * from reviews;
++SELECT * from shops;
+\ No newline at end of file
+diff --git a/userRoutes.ts b/userRoutes.ts
+index 7619f36..782f36b 100644
+--- a/userRoutes.ts
++++ b/userRoutes.ts
+@@ -17,7 +17,7 @@ async function login(req:express.Request,res:express.Response){
+     const users = (await client.query(`SELECT * FROM users WHERE users.username = $1`,[username])).rows;
+     const user = users[0];
+     if(!user){
+-        return res.status(401).redirect('/userLogin.html?error=Incorrect+Username')
++        return res.status(401).redirect('/login.html?error=Incorrect+Username')
+     }
+     // const match = await checkPassword(password,user.password);
+     const match = password == user.password;
+@@ -30,9 +30,9 @@ async function login(req:express.Request,res:express.Response){
+                 id: user.id
+             };
+         }
+-        return res.redirect(`/userInfo.html?username=${username}`); // To the protected page.
++        return res.redirect('/review.html'); // To the protected page.
+     }else{
+-         return res.status(401).redirect('/userLogin.html?error=incorrect')
++         return res.status(401).redirect('/login.html?error=Incorrect+Username')
+     }
+ }
+ // async function logout(req:express.Request,res:express.Response){
+@@ -58,12 +58,17 @@ async function loginGoogle (req:express.Request,res:express.Response){
+     const users = (await client.query(`SELECT * FROM users WHERE users.username = $1`,[result.email])).rows;
+     const user = users[0];
+     if(!user){
+-        return res.status(401).redirect('/userLogin.html?error=incorrect')
++        return res.status(401).redirect('/review.html')
+     }
+     if(req.session){
+         req.session['user'] = {
+             id: user.id
+         };    
+     }
+-    return res.redirect(`/userInfo.html?username=${result.email}`); // To the protected page.
++    return res.redirect('http://localhost:8080/review.html')
+ }
++userRoutes.get('/logout',(req,res)=>{
++    delete req.session['user']
++    console.log(`logout`)
++    res.redirect('/index.html')
++})
+\ No newline at end of file
+diff --git a/users.json b/users.json
+deleted file mode 100644
+index 1270442..0000000
+--- a/users.json
++++ /dev/null
+@@ -1,14 +0,0 @@
+-[
+-    {
+-        "username":"janet",
+-        "password":"12345"
+-    },
+-    {
+-        "username":"michelle",
+-        "password":"98765"
+-    },
+-    {
+-        "username":"alvin",
+-        "password":"54321"
+-    }
+-]
+\ No newline at end of file

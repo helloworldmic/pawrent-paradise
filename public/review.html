@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet"
+        type="text/css" integrity="sha384-1BmE4kWBq78iYhFldvKuhfTAU6auU8tT94WrHftjDbrCEXSU1oBoqyl2QvZ6jIW3"
+        crossorigin="anonymous">
+    <link href="https://maxcdn.bootstrapcdn.com/font-awesome/4.3.0/css/font-awesome.min.css" rel="stylesheet"
+        type="text/css">
+
+    <!-- <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.15.4/css/all.css"
+        integrity="sha384-DyZ88mC6Up2uqS4h/KRgHuoeGwBcD4Ng9SiP4dIRy0EXTlnuz47vAwmeGwVChigm" crossorigin="anonymous"> -->
+    <!-- <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Hahmlet:wght@300&display=swap"> -->
+
+    <link rel="stylesheet" href="./review.css">
+    <title>Comment for Shop</title>
+</head>
+
+<body>
+    <!-- only navbar &carousel hv preset id -->
+    <!----------------------------- navbar -------------------------------------- -->
+    <div id="nav-placeholder"></div>
+    
+    <!---------------------------------- banner--------------------------------- -->
+    <div class="w3-content">
+        <img class="mySlides" src="./banner/dog1.jpg" alt="custom_html_banner1" style="width:100%">
+        <img class="mySlides" src="./banner/dog2.jpeg" alt="custom_html_banner2" style="width:100%">
+        <img class="mySlides" src="./banner/groom2pawfection.jpeg" alt="custom_html_banner3" style="width:100%">
+        <img class="mySlides" src="./banner/puppy-bubble.jpeg" alt="custom_html_banner4" style="width:100%">
+        <img class="mySlides" src="./banner/bath-n-brush.jpeg" alt="" style="width:100%">
+        <img class="mySlides" src="./banner/beast2beauty.jpeg" alt="" style="width:100%">
+        <img class="mySlides" src="./banner/flawless.jpeg" alt="" style="width:100%">
+        <img class="mySlides" src="./banner/mad-dog.jpeg" alt="" style="width:100%">
+        <img class="mySlides" src="./banner/mobile-dog.jpeg" alt="" style="width:100%">
+
+        <button class="w3-button w3-black w3-display-left" onclick="plusDivs(-1)">&#10094;</button>
+        <button class="w3-button w3-black w3-display-right" onclick="plusDivs(1)">&#10095;</button>
+    </div>
+    <!-------------------------------- review form (former:comment)----------------------------------- -->
+    <div class="container bootdey">
+        <div class="col-md-12 bootstrap snippets">
+            <div class="panel">
+                <div class="panel-body">
+                    <!--🌟 add <form id: review-form > name,id :reviewText -->
+                    <form id='review-form' enctype="multipart/form-data">
+                        <textarea class="form-control" name='reviewText' id='reviewText' rows="2"
+                            placeholder="What are you thinking?"></textarea>
+                        <div class="mar-top clearfix">
+                            <button class="btn btn-sm btn-primary pull-right" type="submit"><i
+                                    class="fa fa-pencil fa-fw"></i> Share</button>
+                            <a class="btn btn-trans btn-icon fa fa-video-camera add-tooltip" href="#"></a>
+                            <!-- <a class="btn btn-trans btn-icon fa fa-camera add-tooltip" href="#"></a> -->
+                            <!-- 🌟🌟🌟🌟🌟🌟🌟🌟🌟🌟add name='uploads' id='reviewImage' -->
+                            <input type='file' name='uploads' id='reviewImage' multiple>
+                            <!-- CAN ADD:  accept="image/png, image/jpeg" -->
+                            <!--move the class to label tag-->
+                            <label for="reviewImage" class="btn btn-trans btn-icon fa fa-camera add-tooltip"></label>
+                            <a class="btn btn-trans btn-icon fa fa-file add-tooltip" href="#"></a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            <div class="panel" id='review-container'>
+                <!-- no need: id='review-container', the one in review.js can already use CSS-->
+                <div class="panel-body">
+                    <!-- past review & comment (former) Newsfeed Content -->
+                    <!--======================================================================-->
+                    <div class="media-block">
+                        <a class="media-left" href="#"><img class="img-circle img-sm" alt="Profile Picture"
+                                src="https://bootdey.com/img/Content/avatar/avatar1.png"></a>
+                        <div class="media-body">
+                            <div class="mar-btm">
+                                <a href="#" class="btn-link text-semibold media-heading box-inline">Lisa D.</a>
+                                <p class="text-muted text-sm"><i class="fa fa-mobile fa-lg"></i> - From Mobile - 11 min
+                                    ago</p>
+                            </div>
+                            <p>consectetuer adipiscing elit, sed diam nonummy nibh euismod tincidunt ut laoreet dolore
+                                magna aliquam erat volutpat. Ut wisi enim ad minim veniam, quis nostrud exerci tation
+                                ullamcorper suscipit lobortis nisl ut aliquip ex ea commodo consequat.</p>
+                            <!--------------------- carousel------------------------------------------------- -->
+                            <!-- <div id="carouselExampleCaptions" class="carousel slide" data-bs-ride="carousel">
+                                <div class="carousel-indicators">
+                                    <button type="button" data-bs-target="#carouselExampleCaptions" data-bs-slide-to="0"
+                                        class="active" aria-current="true" aria-label="Slide 1"></button>
+                                    <button type="button" data-bs-target="#carouselExampleCaptions" data-bs-slide-to="1"
+                                        aria-label="Slide 2"></button>
+                                    <button type="button" data-bs-target="#carouselExampleCaptions" data-bs-slide-to="2"
+                                        aria-label="Slide 3"></button>
+                                    <button type="button" data-bs-target="#carouselExampleCaptions" data-bs-slide-to="3"
+                                        aria-label="Slide 4"></button>
+
+                                </div>
+                                <div class="carousel-inner">
+                                    <div class="carousel-item active">
+                                        <img src="./carousel/remy1.jpeg" class="d-block w-100" alt="...">
+                                        <div class="carousel-caption d-none d-md-block">
+                                            <h5>First slide label</h5>
+                                            <p>Some representative placeholder content for the first slide.</p>
+                                        </div>
+                                    </div>
+                                    <div class="carousel-item">
+                                        <img src="./carousel/remy2.jpeg" class="d-block w-100" alt="...">
+                                        <div class="carousel-caption d-none d-md-block">
+                                            <h5>Second slide label</h5>
+                                            <p>Some representative placeholder content for the second slide.</p>
+                                        </div>
+                                    </div>
+                                    <div class="carousel-item">
+                                        <img src="./carousel/remy3.jpeg" class="d-block w-100" alt="...">
+                                        <div class="carousel-caption d-none d-md-block">
+                                            <h5>Third slide label</h5>
+                                            <p>Some representative placeholder content for the third slide.</p>
+                                        </div>
+                                    </div>
+                                    <div class="carousel-item">
+                                        <img src="./carousel/remy4.png" class="d-block w-100" alt="...">
+                                        <div class="carousel-caption d-none d-md-block">
+                                            <h5>Third slide label</h5>
+                                            <p>Some representative placeholder content for the third slide.</p>
+                                        </div>
+                                    </div>
+
+                                </div>
+                                <button class="carousel-control-prev" type="button"
+                                    data-bs-target="#carouselExampleCaptions" data-bs-slide="prev">
+                                    <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                                    <span class="visually-hidden">Previous</span>
+                                </button>
+                                <button class="carousel-control-next" type="button"
+                                    data-bs-target="#carouselExampleCaptions" data-bs-slide="next">
+                                    <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                                    <span class="visually-hidden">Next</span>
+                                </button>
+                            </div> -->
+                            <!----------------- carousel ended---------------------------------------- -->
+                            <div class="pad-ver">
+                                <div class="btn-group">
+                                    <a class="btn btn-sm btn-default btn-hover-success" href="#"><i
+                                            class="fa fa-thumbs-up"></i></a>
+                                    <a class="btn btn-sm btn-default btn-hover-danger" href="#"><i
+                                            class="fa fa-thumbs-down"></i></a>
+                                </div>
+                                <a class="btn btn-sm btn-default btn-hover-primary" href="#">Comment</a>
+                            </div>
+                            <hr>
+
+                            <!-- 2 Comments              :aka reply the above review-->
+                            <div>
+                                <div class="media-block">
+                                    <a class="media-left" href="#"><img class="img-circle img-sm" alt="Profile Picture"
+                                            src="https://bootdey.com/img/Content/avatar/avatar2.png"></a>
+                                    <div class="media-body">
+                                        <div class="mar-btm">
+                                            <a href="#" class="btn-link text-semibold media-heading box-inline">Bobby
+                                                Marz</a>
+                                            <p class="text-muted text-sm"><i class="fa fa-mobile fa-lg"></i> - From
+                                                Mobile - 7 min ago</p>
+                                        </div>
+                                        <p>Sed diam nonummy nibh euismod tincidunt ut laoreet dolore magna aliquam erat
+                                            volutpat. Ut wisi enim ad minim veniam, quis nostrud exerci tation
+                                            ullamcorper suscipit lobortis nisl ut aliquip ex ea commodo consequat.</p>
+                                        <div class="pad-ver">
+                                            <div class="btn-group">
+                                                <a class="btn btn-sm btn-default btn-hover-success active" href="#"><i
+                                                        class="fa fa-thumbs-up"></i> You Like it</a>
+                                                <a class="btn btn-sm btn-default btn-hover-danger" href="#"><i
+                                                        class="fa fa-thumbs-down"></i></a>
+                                            </div>
+                                            <a class="btn btn-sm btn-default btn-hover-primary" href="#">Comment</a>
+                                        </div>
+                                        <hr>
+                                    </div>
+                                </div>
+
+                                <div class="media-block">
+                                    <a class="media-left" href="#"><img class="img-circle img-sm" alt="Profile Picture"
+                                            src="https://bootdey.com/img/Content/avatar/avatar3.png">
+                                    </a>
+                                    <div class="media-body">
+                                        <div class="mar-btm">
+                                            <a href="#" class="btn-link text-semibold media-heading box-inline">Lucy
+                                                Moon</a>
+                                            <p class="text-muted text-sm"><i class="fa fa-globe fa-lg"></i> - From Web -
+                                                2 min ago</p>
+                                        </div>
+                                        <p>Duis autem vel eum iriure dolor in hendrerit in vulputate ?</p>
+                                        <div class="pad-ver">
+                                            <div class="btn-group">
+                                                <a class="btn btn-sm btn-default btn-hover-success" href="#"><i
+                                                        class="fa fa-thumbs-up"></i></a>
+                                                <a class="btn btn-sm btn-default btn-hover-danger" href="#"><i
+                                                        class="fa fa-thumbs-down"></i></a>
+                                            </div>
+                                            <a class="btn btn-sm btn-default btn-hover-primary" href="#">Comment</a>
+                                        </div>
+                                        <hr>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <!--===================================================-->
+                    <!-- End Newsfeed Content -->
+
+
+                </div>
+                <!-- <div id="cBox">  by reemo </div>-->
+            </div>
+        </div>
+    </div>
+    <!-- 🌟🌟🌟🌟🌟🌟🌟🌟🌟 -->
+    <!-- <script src="https://code.jquery.com/jquery-3.5.1.js" -->
+    <!-- integrity="sha256-QWo7LDvxbWT2tbbQ97B53yJnYU3WhH/C8ycbRAkjPDc=" crossorigin="anonymous"></script> -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-ka7Sk0Gln4gmtz2MlQnikT1wXgYsOg+OMhuP+IlRH9sENBO0LRn5q+8nbTov4+1p"
+        crossorigin="anonymous"></script>
+    <script src="//code.jquery.com/jquery.min.js"></script>
+    <script src='review.js'></script>
+    <script src="nav.js"></script>
+
+</body>
+
+</html>

@@ -1,0 +1,24 @@
+{
+    "sqltools.connections": [
+        {
+            "previewLimit": 50,
+            "server": "localhost",
+            "port": 5432,
+            "driver": "PostgreSQL",
+            "name": "default",
+            "database": "",
+            "username": "",
+            "password": ""
+        },
+        {
+            "previewLimit": 50,
+            "server": "localhost",
+            "port": 5432,
+            "driver": "PostgreSQL",
+            "name": "mikewong",
+            "database": "petshop_projects",
+            "username": "janet",
+            "password": ""
+        }
+    ]
+}
